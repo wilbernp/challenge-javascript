@@ -8,6 +8,7 @@
 // Pero todos los métodos ya implementados en las homeowrks no es 
 // necesario que los vuelvan a definir.
 
+const { list } = require('mocha/lib/reporters');
 const {
     Queue,
     LinkedList,
@@ -33,7 +34,9 @@ const {
 // < 16
 
 function exponencial(exp) {
-
+    return function (v) {
+        return v ** exp
+    }
 }
 
 // ----- Recursión -----
@@ -44,13 +47,13 @@ function exponencial(exp) {
 // que se deben realizar, para llegar al destino de un laberinto dado.
 //
 // Ejemplo: dado el siguiente laberinto:
-// let laberintoExample = { // direccion = ""
+// let obj = { // direccion = ""
 //     N: 'pared',
 //     S: { // direccion = "S"
 //         N: 'pared',
 //         S: 'pared',
 //         E: { // direccion = "SE"
-//             N: 'destino', // direccion = "SEN"
+//             N: 'pared', // direccion = "SEN"
 //             S: 'pared',
 //             E: 'pared',
 //             O: 'pared'
@@ -62,16 +65,30 @@ function exponencial(exp) {
 //             O: 'pared'
 //         }
 //     },
-//     E: 'pared',
+//     E: 'destino',
 //     O: 'pared'
 // }
 // El retorno de la funcion 'direcciones' debe ser 'SEN', ya que el destino se encuentra
 // haciendo los movimientos SUR->ESTE->NORTE
 // Aclaraciones: el segundo parametro que recibe la funcion ('direccion') puede ser pasado vacio (null)
 
-function direcciones(laberinto) {
-
+var direcciones = function (obj) {
+    let direccion = '';
+    if (!obj) {
+        return "";
+    }
+    for (let prop in obj) {
+        if (obj[prop] === 'destino') {
+            return direccion += prop;
+        } else {
+            if (typeof obj[prop] === 'object') {
+                return direccion += prop + direcciones(obj[prop]);
+            }
+        }
+    }
+    return ""
 }
+
 
 
 // EJERCICIO 3
@@ -88,7 +105,26 @@ function direcciones(laberinto) {
 // deepEqualArrays([0,1,[[0,1,2],1,2]], [0,1,[[0,1,2],1,2]]) => true
 
 function deepEqualArrays(arr1, arr2) {
+    let c = 0;
 
+    if (arr1.length !== arr2.length) {
+        return false;
+    }
+
+    while (c < arr1.length) {
+
+        if (Array.isArray(arr1[c]) && Array.isArray(arr2[c])) {
+            return deepEqualArrays(arr1[c], arr2[c])
+        }
+        if (arr1[c] !== arr2[c]) {
+            return false;
+        } else {
+            c++;
+        }
+    }
+    if (c === arr1.length) {
+        return true;
+    }
 }
 
 
@@ -110,7 +146,7 @@ function OrderedLinkedList() {
 // notar que Node esta implementado en el archivo DS
 
 // Y el metodo print que permite visualizar la lista:
-OrderedLinkedList.prototype.print = function(){
+OrderedLinkedList.prototype.print = function () {
     let print = 'head'
     let pointer = this.head
     while (pointer) {
@@ -120,7 +156,6 @@ OrderedLinkedList.prototype.print = function(){
     print += ' --> null'
     return print
 }
-
 
 // EJERCICIO 4
 // Crea el metodo 'add' que debe agregar nodos a la OLL de forma que la misma se conserve ordenada:
@@ -138,9 +173,62 @@ OrderedLinkedList.prototype.print = function(){
 // > LL.print()
 // < 'head --> 5 --> 3 --> 1 --> null'
 //               4
-OrderedLinkedList.prototype.add = function(val){
-    
+OrderedLinkedList.prototype.add = function (value) {
+    let nodo = new Node(value);
+
+    //determina si la lista esta vacia
+    if (!this.head) {
+        //la lista quedaria asi: lista={head:{value: value, next:null}}
+        this.head = nodo;
+        return;
+    }
+
+    //compara si valor del nodo es menor al primer valor de la lista y si la lista tiene mas de un nodo
+    if (nodo.value < this.head.value && !this.head.next) {
+        //la lista quedaris asi: lista={head:{value: value, next:{value: value, next:null}}} es decir el primer next de la lista se le agrega el nuevo nodo
+        this.head.next = nodo;
+        return;
+    }
+
+    //si el valor del nodo es mayor al primer valor de la lista
+    if (nodo.value > this.head.value) {
+        //el next del nuevo nodo apuntara a lo mismo que apunte el head de la lista:
+        //nodo={value:value, next:"head"{...}}
+        nodo.next = this.head;
+        //el head apuntara al nodo el cual tendra todo lo que tenia el head: 
+        //head="nodo"{value:value, next{...}}
+        this.head = nodo;
+        return;
+    }
+
+    //se guarda todo lo que tiene el head de la lista
+    let current = this.head;
+
+    //mientras el valor del nodo sea menor al valor al que esta apuntando el next del current y que ese next no este apuntando a null
+    while (nodo.value < current.next.value && current.next) {
+        //current avanzara una pocision y por tanto apuntara al objeto que tiene en su next
+        current = current.next;
+    }
+
+    //si current no quedo haciendo refencia a un objeto next que apuntara a null, es decir que en su propiedad (objeto) next haya algo
+    if (current.next) {
+        //el next del nuevo nodo apunta a todo lo que esta en la propiedad(objeto) next del current
+        nodo.next = current.next;
+        //la propiedad(objeto) next del current apuntara al nuevo nodo el cual quedo con todo lo que tenia el next del current
+        current.next = nodo;
+    } else {
+        current.next = nodo;
+    }
 }
+
+// let ol = new OrderedLinkedList();
+// ol.add(5)
+// console.log(ol)
+// ol.add(4)
+// console.log(ol)
+// ol.add(6)
+// console.log(ol)
+
 
 
 // EJERCICIO 5
@@ -158,10 +246,27 @@ OrderedLinkedList.prototype.add = function(val){
 // > LL.removeHigher()
 // < null
 
-OrderedLinkedList.prototype.removeHigher = function(){
-    
+OrderedLinkedList.prototype.removeHigher = function () {
+    if (!this.head) {
+        return null;
+    }
+
+    if (!this.head.next) {
+        let n = this.head.value
+        this.head = null;
+        return n
+    }
+    let n = this.head.value;
+    this.head = this.head.next;
+    return n;
 }
 
+// console.log(ol.removeHigher())
+// console.log(ol)
+// console.log(ol.removeHigher())
+// console.log(ol)
+// console.log(ol.removeHigher())
+// console.log(ol)
 
 // EJERCICIO 6
 // Crea el metodo 'removeLower' que deve devolver el valor mas bajo de la linked list 
@@ -178,9 +283,23 @@ OrderedLinkedList.prototype.removeHigher = function(){
 // > LL.removeHigher()
 // < null
 
-OrderedLinkedList.prototype.removeLower = function(){
-    
+OrderedLinkedList.prototype.removeLower = function () {
+    if(!this.head) return null;
+    if(!this.head.next) {
+        let n = this.head.value;
+        this.head = null;
+        return n;
+    }
+    let current = this.head;
+    while(current.next.next){
+        current = current.next;
+    }
+    let n = current.next.value;
+    current.next = null;
+    return n;
 }
+
+
 
 
 
@@ -211,8 +330,8 @@ OrderedLinkedList.prototype.removeLower = function(){
 // > multiCallbacks(cbs1, cbs2);
 // < ["2-1", "1-1", "1-2", "2-2"];
 
-function multiCallbacks(cbs1, cbs2){
-    
+function multiCallbacks(cbs1, cbs2) {
+
 }
 
 
@@ -230,8 +349,8 @@ function multiCallbacks(cbs1, cbs2){
 // 5   9
 // resultado:[5,8,9,32,64]
 
-BinarySearchTree.prototype.toArray = function() {
-    
+BinarySearchTree.prototype.toArray = function () {
+
 }
 
 
@@ -250,7 +369,7 @@ BinarySearchTree.prototype.toArray = function() {
 // informarse sobre algoritmos, leerlos de un pseudocodigo e implemnterlos alcanzara
 
 function primalityTest(n) {
-    
+
 }
 
 
@@ -260,7 +379,7 @@ function primalityTest(n) {
 // https://en.wikipedia.org/wiki/Quicksort
 
 function quickSort(array) {
-    
+
 }
 // QuickSort ya lo conocen solo que este 
 // ordena de mayor a menor
@@ -282,8 +401,8 @@ function quickSort(array) {
 // > reverse(95823);
 // < 32859
 
-function reverse(num){
-    
+function reverse(num) {
+
 }
 // la grandiosa resolucion de Wilson!!!
 // declaran una variable donde 
