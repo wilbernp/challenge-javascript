@@ -319,19 +319,25 @@ OrderedLinkedList.prototype.removeLower = function () {
 // segun cual de estas se estima que tarde menos, retornando un arreglo de resultados
 // de las mismas en el orden que fueron ejecutadas
 // Ejemplo:
-// > let cbs1 = [
+// let cbs1 = [
 //       {cb:function(){return '1-1'}, time: 2},
 //       {cb:function(){return '1-2'}, time: 3}
 //   ];
-// > let cbs2 = [
+// let cbs2 = [
 //       {cb:function(){return '2-1'}, time: 1},
 //       {cb:function(){return '2-2'}, time: 4}
 //   ];
-// > multiCallbacks(cbs1, cbs2);
-// < ["2-1", "1-1", "1-2", "2-2"];
+// multiCallbacks(cbs1, cbs2);
+// ["2-1", "1-1", "1-2", "2-2"];
 
 function multiCallbacks(cbs1, cbs2) {
-
+    let a = [];
+    let array = cbs1.concat(cbs2)
+    let n = array.sort((a, b) => a.time - b.time)
+    for (let i = 0; i < n.length; i++) {
+        a.push(n[i].cb());
+    }
+    return a;
 }
 
 
